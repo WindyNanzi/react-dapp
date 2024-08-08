@@ -4,5 +4,5 @@ export default antfu({
   react: true,
   ignores: [
     '/games',
-  ]
+  ],
 })
