@@ -5,6 +5,7 @@ module game::aot {
   use sui::object;
   use sui::transfer;
   use sui::url;
+  use sui::sui;
 
   /// 初始纪元
   const EAlreadyMinted: u64 = 0;

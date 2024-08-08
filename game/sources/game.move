@@ -44,17 +44,17 @@ module game::game {
 
   // 注册用户
   public fun register(
-    ctx: &mut TxContext,
     aot_data: &mut Aot_Data,
     r: &mut Game_Record,
+    ctx: &mut TxContext,
   ):bool {
     let sender = ctx.sender();
-    assert!(aot::house(aot_data) == sender, ENotSystemAddress);
+    assert!(aot::house(aot_data) != sender, ENotSystemAddress);
 
     let state = if(!table::contains(&r.record, sender)) {
       let player = player::generate_player(ctx);
-      let game_ifon = generate_game_info(ctx, player);
-      table::add(&mut r.record, sender, game_ifon);
+      let game_info = generate_game_info(player, ctx);
+      table::add(&mut r.record, sender, game_info);
       false
     } else  {
       true
@@ -64,28 +64,28 @@ module game::game {
 
   // 用户获得免费的代币
   public fun get_free_coins(
-    ctx: &mut TxContext,
     aot_data: &mut Aot_Data,
     r: &mut Game_Record,
+    ctx: &mut TxContext,
   ) {
-    assert!(aot::get_balance_val(aot_data) <= 500_000_000, ENoPoolBalance);
+    assert!(aot::get_balance_val(aot_data) > 1_000_000_000, ENoPoolBalance);
     let game_info = table::borrow_mut(&mut r.record, ctx.sender());
-    assert!(player::get_free_time(&mut game_info.player) <=0 , ENoFreeTime);
+    assert!(player::get_free_time(&mut game_info.player) > 0 , ENoFreeTime);
 
     let balance = aot::take_balance(aot_data);
     player::add_balance(balance, &mut game_info.player);
   }
 
   // 改变点数
-  fun change_point(
-    ctx: &mut TxContext,
+  public entry  fun change_point(
     aot_data: &mut Aot_Data,
     r: &mut Game_Record,
     random: &Random,
-    isUp: bool
+    isUp: bool,
+    ctx: &mut TxContext,
   ) {
     let mut game_info = table::borrow_mut(&mut r.record, ctx.sender());
-    assert!(player::get_balance_val(&mut game_info.player) <=0 , ENoPoolBalance);
+    assert!(player::get_balance_val(&mut game_info.player) > 0 , ENoUserBalance);
     let roll = roll(random,  ctx);
     let point = (
       if(isUp) {
@@ -106,8 +106,8 @@ module game::game {
 
   // 生成游戏信息
   fun generate_game_info(
-    ctx: &mut TxContext,
     player: Player,
+    ctx: &mut TxContext,
   ):Game_Info {
     Game_Info {
       id:object::new(ctx),
